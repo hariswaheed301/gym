@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, form_actions %}
+{% block title %}Record payment{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">Record payment</h1>
+<p class="text-muted">{{ m.member.full_name }} · {{ m.plan.name }} · outstanding <strong>{{ m.outstanding|money(m.currency) }}</strong></p>
+<div class="alert alert-secondary">Payments are recorded manually. No online payment gateway is connected.</div>
+<div class="card"><div class="card-body"><form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row"><div class="col-md-4">{{ field(form.amount) }}</div><div class="col-md-4">{{ field(form.method) }}</div><div class="col-md-4">{{ field(form.reference_number) }}</div>
+  <div class="col-12">{{ field(form.notes) }}</div></div>
+  {{ form_actions(url_for('memberships.detail', membership_id=m.id), 'Record payment') }}
+</form></div></div>
+{% endblock %}

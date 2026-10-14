@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, field %}
+{% block title %}Equipment permissions{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">Equipment permissions</h1>
+<p><a href="{{ url_for('members.detail', member_id=member.id) }}">{{ member.full_name }} ({{ member.member_number }})</a></p>
+<div class="alert alert-secondary small">Precedence: a member-specific <strong>restriction</strong> always wins → then a member-specific <strong>allow</strong> → unrestricted equipment is open to all → restricted equipment needs a plan grant.</div>
+<div class="card mb-3"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Equipment</th><th>Status</th><th>Access</th><th>Why</th><th>Override</th></tr></thead><tbody>
+{% for r in matrix %}<tr><td>{{ r.equipment.name }}<div class="small text-muted">{{ r.equipment.category }}</div></td><td>{{ badge(r.equipment.status) }}</td>
+  <td>{% if r.allowed %}<span class="text-success"><i class="bi bi-check-circle-fill"></i> Permitted</span>{% else %}<span class="text-danger"><i class="bi bi-x-circle-fill"></i> Not permitted</span>{% endif %}</td>
+  <td>{{ r.label }}</td><td>{{ (r.override or '—')|title }}</td></tr>{% else %}<tr><td colspan="5" class="text-muted">No equipment defined.</td></tr>{% endfor %}</tbody></table></div></div>
+{% if current_user.role == 'admin' and matrix %}
+<div class="card mb-3"><div class="card-header">Change permission</div><div class="card-body"><form method="post" class="row g-2 align-items-end">{{ form.hidden_tag() }}
+  <div class="col-md-4">{{ field(form.equipment_id) }}</div><div class="col-md-3">{{ field(form.effect) }}</div><div class="col-md-3">{{ field(form.reason) }}</div>
+  <div class="col-md-2 mb-3 d-grid"><button class="btn btn-primary" type="submit">Apply</button></div></form></div></div>{% endif %}
+<div class="card"><div class="card-header">Recently recorded usage <span class="text-muted small">(manually reported by staff)</span></div>
+{% if usage %}<ul class="list-group list-group-flush">{% for u in usage %}<li class="list-group-item">{{ u.equipment.name }} — {{ u.recorded_at|localdt }} by {{ u.recorded_by.full_name }}{% if u.note %} · {{ u.note }}{% endif %}</li>{% endfor %}</ul>
+{% else %}<div class="card-body text-muted">No usage recorded.</div>{% endif %}</div>
+{% endblock %}

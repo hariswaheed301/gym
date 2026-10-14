@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Receipt {{ p.receipt_number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h1 class="h3 mb-0">Receipt {{ p.receipt_number }} {{ badge(p.status) }}</h1>
+  <button class="btn btn-outline-secondary btn-sm no-print" type="button" data-print>Print</button></div>
+<div class="card mb-3"><div class="card-body"><dl class="row mb-0">
+  <dt class="col-sm-3">Member</dt><dd class="col-sm-9"><a href="{{ url_for('members.detail', member_id=m.member_id) }}">{{ m.member.full_name }} ({{ m.member.member_number }})</a></dd>
+  <dt class="col-sm-3">Membership</dt><dd class="col-sm-9"><a href="{{ url_for('memberships.detail', membership_id=m.id) }}">{{ m.plan.name }}, {{ m.start_date|datefmt }} – {{ m.expiry_date|datefmt }}</a></dd>
+  <dt class="col-sm-3">Amount</dt><dd class="col-sm-9"><strong>{{ p.amount|money(m.currency) }}</strong></dd>
+  <dt class="col-sm-3">Method</dt><dd class="col-sm-9">{{ p.method|replace('_',' ')|title }}{% if p.reference_number %} · ref {{ p.reference_number }}{% endif %}</dd>
+  <dt class="col-sm-3">Date</dt><dd class="col-sm-9">{{ p.paid_at|localdt }}</dd>
+  <dt class="col-sm-3">Recorded by</dt><dd class="col-sm-9">{{ p.recorded_by.full_name }}</dd>
+  {% if p.notes %}<dt class="col-sm-3">Notes</dt><dd class="col-sm-9">{{ p.notes }}</dd>{% endif %}
+  {% if p.status == 'voided' %}<dt class="col-sm-3">Voided</dt><dd class="col-sm-9">{{ p.voided_at|localdt }} by {{ p.voided_by.full_name }} — {{ p.void_reason }}</dd>{% endif %}
+</dl></div></div>
+{% if current_user.role == 'admin' and p.status == 'valid' %}
+<div class="card no-print"><div class="card-header">Void payment</div><div class="card-body">
+  <p class="small text-muted">Payments are never deleted. Voiding keeps the record and re-opens the balance. To correct an amount, void and record a new payment.</p>
+  <form method="post" action="{{ url_for('payments.void', payment_id=p.id) }}" data-confirm="Void this payment? This cannot be undone.">
+    {{ form.hidden_tag() }}
+    <label class="form-label" for="reason">Reason (required)</label><input class="form-control mb-2" id="reason" name="reason" maxlength="500" required>
+    <button class="btn btn-outline-danger btn-sm" type="submit">Void payment</button></form></div></div>{% endif %}
+{% endblock %}

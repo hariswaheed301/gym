@@ -1,0 +1,17 @@
+{% from "_macros.html" import badge, empty %}
+{% if sessions %}
+<div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+  <thead><tr><th>No.</th><th>Member</th><th>Membership</th><th>Checked in</th><th>Time inside</th><th>By</th><th></th></tr></thead><tbody>
+  {% for s in sessions %}{% set cm = current.get(s.member_id) %}{% set long = s.check_in_at < cutoff %}
+  <tr class="{{ 'table-warning' if long }}">
+    <td>{{ s.member.member_number }}</td><td><a href="{{ url_for('members.detail', member_id=s.member_id) }}">{{ s.member.full_name }}</a></td>
+    <td>{% if cm %}{{ cm.plan.name }} <span class="small text-muted">to {{ cm.expiry_date|datefmt }}</span>{% else %}<span class="text-danger small">No current membership</span>{% endif %}</td>
+    <td>{{ s.check_in_at|localdt }}</td>
+    <td><span class="elapsed" data-checkin="{{ s.check_in_at|iso }}">{{ s.elapsed(now)|duration }}</span>
+      {% if long %}<span class="badge text-bg-warning" title="Open longer than {{ config.LONG_SESSION_HOURS }} hours">Possible missed check-out</span>{% endif %}</td>
+    <td>{{ s.check_in_by.full_name if s.check_in_by else '—' }}</td>
+    <td class="text-end text-nowrap">
+      <form method="post" action="{{ url_for('attendance.check_out', attendance_id=s.id) }}" class="d-inline" data-confirm="Check out {{ s.member.full_name }}?">{{ action_form.hidden_tag() }}<button class="btn btn-sm btn-warning" type="submit">Check out</button></form>
+      {% if long and current_user.role == 'admin' %}<a class="btn btn-sm btn-outline-danger" href="{{ url_for('attendance.correct', attendance_id=s.id) }}">Review</a>{% endif %}
+    </td></tr>{% endfor %}</tbody></table></div></div>
+{% else %}<div class="card">{{ empty('Nobody is inside right now.', 'bi-door-closed') }}</div>{% endif %}

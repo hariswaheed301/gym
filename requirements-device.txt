@@ -1,0 +1,2 @@
+-r requirements.txt
+pyzk>=0.9

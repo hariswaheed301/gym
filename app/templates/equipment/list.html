@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, post_button, empty %}
+{% block title %}Equipment{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h1 class="h3 mb-0">Equipment</h1>
+  <div class="d-flex gap-2"><div class="btn-group" role="group" aria-label="Filter by status">
+    {% for v, l in [('','All'),('operational','Available'),('maintenance','Maintenance'),('unavailable','Unavailable')] %}<a class="btn btn-sm btn-outline-primary {{ 'active' if status == v }}" href="{{ url_for('equipment.index', status=v) if v else url_for('equipment.index') }}">{{ l }}</a>{% endfor %}</div>
+  {% if current_user.role == 'admin' %}<a class="btn btn-primary btn-sm" href="{{ url_for('equipment.create') }}"><i class="bi bi-plus-lg"></i> Add equipment</a>{% endif %}</div></div>
+<div class="card">{% if items %}<div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Name</th><th>Category</th><th>Location</th><th>Status</th><th>Access</th><th></th></tr></thead><tbody>
+{% for e in items %}<tr class="{{ 'text-muted' if not e.is_active }}"><td><strong>{{ e.name }}</strong>{% if e.maintenance_notes %}<div class="small text-muted">{{ e.maintenance_notes }}</div>{% endif %}</td><td>{{ e.category }}</td><td>{{ e.location or '—' }}</td>
+  <td>{{ badge(e.status) if e.is_active else badge('inactive') }}</td><td>{{ 'Restricted' if e.is_restricted else 'Open' }}</td>
+  <td class="text-end text-nowrap">{% if current_user.role == 'admin' and e.is_active %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('equipment.edit', equipment_id=e.id) }}">Edit</a>
+    {{ post_button(url_for('equipment.deactivate', equipment_id=e.id), 'Deactivate', 'Deactivate ' ~ e.name ~ '?', 'btn-outline-danger btn-sm') }}{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% else %}{{ empty('No equipment found.', 'bi-tools') }}{% endif %}</div>
+{% endblock %}

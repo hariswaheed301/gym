@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, form_actions %}
+{% block title %}{{ 'Edit equipment' if eq else 'Add equipment' }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ 'Edit equipment' if eq else 'Add equipment' }}</h1>
+<div class="card"><div class="card-body"><form method="post" novalidate>{{ form.hidden_tag() }}
+  <div class="row"><div class="col-md-6">{{ field(form.name) }}</div><div class="col-md-3">{{ field(form.category) }}</div><div class="col-md-3">{{ field(form.location) }}</div>
+  <div class="col-12">{{ field(form.description) }}</div><div class="col-md-4">{{ field(form.status) }}</div><div class="col-md-8">{{ field(form.maintenance_notes) }}</div>
+  <div class="col-12">{{ field(form.is_restricted) }}{{ field(form.is_active) }}</div></div>
+  {{ form_actions(url_for('equipment.index'), 'Save') }}</form></div></div>
+{% endblock %}

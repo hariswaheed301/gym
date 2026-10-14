@@ -1,0 +1,16 @@
+Flask
+Flask-SQLAlchemy
+SQLAlchemy
+Flask-Migrate
+Flask-Login
+Flask-WTF
+WTForms
+email-validator
+argon2-cffi
+Flask-Limiter
+Flask-Talisman
+psycopg[binary]
+python-dotenv
+gunicorn
+tzdata
+cryptography>=42

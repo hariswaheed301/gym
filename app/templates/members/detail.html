@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, post_button, field %}
+{% block title %}{{ member.full_name }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+  <div><h1 class="h3 mb-0">{{ member.full_name }} {{ badge('active' if member.is_active else 'inactive') }}</h1>
+    <div class="text-muted">{{ member.member_number }} · {{ member.phone }}{% if member.email %} · {{ member.email }}{% endif %}</div></div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('members.edit', member_id=member.id) }}">Edit</a>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('memberships.create', member_id=member.id) }}">New / renew membership</a>
+    {% if current_user.role == 'admin' %}{% if member.is_active %}{{ post_button(url_for('members.set_active', member_id=member.id, action='deactivate'), 'Deactivate', 'Deactivate ' ~ member.full_name ~ '?', 'btn-outline-danger btn-sm') }}
+    {% else %}{{ post_button(url_for('members.set_active', member_id=member.id, action='activate'), 'Reactivate', None, 'btn-outline-success btn-sm') }}{% endif %}{% endif %}
+  </div>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-lg-4"><div class="card h-100"><div class="card-header">Entry eligibility</div><div class="card-body">
+    {% if decision.allowed %}<p class="text-success mb-1"><i class="bi bi-check-circle-fill"></i> Eligible to enter</p>{% else %}<p class="text-danger mb-1"><i class="bi bi-x-circle-fill"></i> {{ decision.message }}</p>{% endif %}
+    {% if open_session %}<p class="mb-1">{{ badge('open') }} Inside since {{ open_session.check_in_at|localdt }}</p>{% endif %}
+    <p class="mb-0">Outstanding balance: <strong class="{{ 'text-danger' if outstanding > 0 }}">{{ outstanding|money }}</strong></p></div></div></div>
+  <div class="col-lg-8"><div class="card h-100"><div class="card-header">Details</div><div class="card-body"><dl class="row mb-0">
+    <dt class="col-sm-4">Registered</dt><dd class="col-sm-8">{{ member.registered_on|datefmt }}</dd>
+    <dt class="col-sm-4">Date of birth</dt><dd class="col-sm-8">{{ member.date_of_birth|datefmt }}</dd>
+    <dt class="col-sm-4">Gender</dt><dd class="col-sm-8">{{ (member.gender or '—')|title }}</dd>
+    <dt class="col-sm-4">Address</dt><dd class="col-sm-8">{{ member.address or '—' }}</dd>
+    <dt class="col-sm-4">Emergency contact</dt><dd class="col-sm-8">{{ member.emergency_contact_name or '—' }} {{ member.emergency_contact_phone or '' }}</dd>
+    {% if current_user.role == 'admin' %}<dt class="col-sm-4">Internal notes</dt><dd class="col-sm-8">{{ member.notes or '—' }}</dd>{% endif %}
+  </dl></div></div></div>
+</div>
+<div class="card mb-3"><div class="card-header">Membership history</div>
+  {% if memberships %}<div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Plan</th><th>Period</th><th>State</th><th>Payment</th><th class="text-end">Net</th><th class="text-end">Due</th><th></th></tr></thead><tbody>
+  {% for ms in memberships %}<tr><td>{{ ms.plan.name }}{% if ms.renewed_from_id %} <span class="badge text-bg-light">renewal</span>{% endif %}</td>
+    <td>{{ ms.start_date|datefmt }} – {{ ms.expiry_date|datefmt }}</td><td>{{ badge(ms.state(today)) }}</td><td>{{ badge(ms.payment_status) }}</td>
+    <td class="text-end">{{ ms.net_price|money(ms.currency) }}</td><td class="text-end">{{ (ms.outstanding if ms.status != 'cancelled' else 0)|money(ms.currency) }}</td>
+    <td><a href="{{ url_for('memberships.detail', membership_id=ms.id) }}">Open</a></td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<div class="card-body text-muted">No memberships yet.</div>{% endif %}</div>
+<div class="card mb-3"><div class="card-header">Payment history</div>
+  {% if payments %}<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Receipt</th><th>Date</th><th>Method</th><th class="text-end">Amount</th><th>Status</th></tr></thead><tbody>
+  {% for p in payments %}<tr><td><a href="{{ url_for('payments.receipt', payment_id=p.id) }}">{{ p.receipt_number }}</a></td><td>{{ p.paid_at|localdt }}</td><td>{{ p.method|replace('_',' ')|title }}</td><td class="text-end">{{ p.amount|money(p.membership.currency) }}</td><td>{{ badge(p.status) }}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<div class="card-body text-muted">No payments yet.</div>{% endif %}</div>
+<div class="card mb-3"><div class="card-header d-flex flex-wrap justify-content-between gap-1"><span>Recent attendance ({{ visit_count }} visits total)</span>
+  <span class="small">Total time in gym: <strong>{{ total_visit_duration|duration }}</strong></span>
+  <a href="{{ url_for('attendance.history', member_id=member.id) }}" class="small">Full history</a></div>
+  {% if visits %}<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>In</th><th>Out</th><th>Duration</th></tr></thead><tbody>
+  {% for a in visits %}<tr><td>{{ a.check_in_at|localdt }}</td><td>{% if a.check_out_at %}{{ a.check_out_at|localdt }}{% else %}{{ badge('open') }}{% endif %}{% if a.is_correction %} <span class="badge text-bg-warning">corrected</span>{% endif %}</td><td>{{ a.duration|duration if a.check_out_at else '—' }}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<div class="card-body text-muted">No visits yet.</div>{% endif %}</div>
+<div class="card"><div class="card-header d-flex justify-content-between">Equipment access
+  <a href="{{ url_for('equipment.member_permissions', member_id=member.id) }}" class="small">{{ 'Manage permissions' if current_user.role == 'admin' else 'Details' }}</a></div>
+  <div class="card-body"><div class="row">
+    <div class="col-md-6"><h2 class="h6 text-success">Permitted</h2><ul class="list-unstyled mb-3">{% for r in matrix if r.allowed %}<li>{{ r.equipment.name }} {% if r.equipment.status != 'operational' %}{{ badge(r.equipment.status) }}{% endif %}</li>{% else %}<li class="text-muted">None</li>{% endfor %}</ul></div>
+    <div class="col-md-6"><h2 class="h6 text-danger">Not permitted</h2><ul class="list-unstyled mb-3">{% for r in matrix if not r.allowed %}<li>{{ r.equipment.name }} <span class="text-muted small">({{ r.label }})</span></li>{% else %}<li class="text-muted">None</li>{% endfor %}</ul></div></div>
+    {% if usage_form.equipment_id.choices %}
+    <form method="post" action="{{ url_for('equipment.record_usage', member_id=member.id) }}" class="row g-2 align-items-end border-top pt-3">
+      {{ usage_form.hidden_tag() }}
+      <div class="col-md-5">{{ usage_form.equipment_id.label(class_='form-label') }}{{ usage_form.equipment_id(class_='form-select') }}</div>
+      <div class="col-md-5">{{ usage_form.note.label(class_='form-label') }}{{ usage_form.note(class_='form-control') }}</div>
+      <div class="col-md-2 d-grid"><button class="btn btn-outline-primary" type="submit">Record usage</button></div>
+      <div class="form-text">Usage is recorded manually by staff; it is not detected automatically.</div>
+    </form>{% endif %}
+  </div></div>
+{% endblock %}

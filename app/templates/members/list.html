@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, pagination, empty %}
+{% block title %}Members{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0">Members</h1>
+  <a class="btn btn-primary" href="{{ url_for('members.create') }}"><i class="bi bi-person-plus"></i> Register member</a></div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-12 col-md-5"><label class="visually-hidden" for="q">Search</label><input id="q" name="q" value="{{ q }}" class="form-control" placeholder="Search member no., name or phone"></div>
+  <div class="col-6 col-md-3"><label class="visually-hidden" for="status">Status</label><select id="status" name="status" class="form-select">
+    {% for v, l in [('active','Active'),('inactive','Inactive'),('all','All')] %}<option value="{{ v }}" {{ 'selected' if status == v }}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="col-6 col-md-3"><label class="visually-hidden" for="membership">Membership</label><select id="membership" name="membership" class="form-select">
+    {% for v, l in [('','Any membership'),('current','Current'),('expired','Expired'),('none','No membership')] %}<option value="{{ v }}" {{ 'selected' if mstate == v }}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="col-12 col-md-1 d-grid"><button class="btn btn-outline-primary" type="submit">Filter</button></div>
+</form>
+<div class="card">{% if page.items %}<div class="table-responsive"><table class="table table-hover align-middle mb-0">
+  <thead><tr><th>No.</th><th>Name</th><th>Phone</th><th>Current membership</th><th>Status</th></tr></thead><tbody>
+  {% for m in page.items %}{% set cm = current.get(m.id) %}<tr>
+    <td>{{ m.member_number }}</td><td><a href="{{ url_for('members.detail', member_id=m.id) }}">{{ m.full_name }}</a></td><td>{{ m.phone }}</td>
+    <td>{% if cm %}{{ cm.plan.name }} <span class="text-muted small">until {{ cm.expiry_date|datefmt }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+    <td>{{ badge('active' if m.is_active else 'inactive') }}</td></tr>{% endfor %}
+  </tbody></table></div>{% else %}{{ empty('No members match.', 'bi-people') }}{% endif %}</div>
+<div class="mt-3">{{ pagination(page) }}</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, form_actions %}
+{% block title %}{{ 'Configure' if device else 'Add' }} attendance device{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ 'Configure' if device else 'Add' }} attendance device</h1>
+<form method="post" novalidate autocomplete="off">{{ form.hidden_tag() }}
+  <div class="row g-3">
+    <section class="col-lg-6" aria-labelledby="connection-heading">
+      <h2 id="connection-heading" class="h5">Connection</h2>
+      {{ field(form.name) }}{{ field(form.adapter) }}{{ field(form.host) }}
+      <div class="row"><div class="col-sm-6">{{ field(form.port) }}</div><div class="col-sm-6">{{ field(form.transport) }}</div></div>
+      <div class="row"><div class="col-sm-6">{{ field(form.timeout_seconds) }}</div><div class="col-sm-6">{{ field(form.timezone) }}</div></div>
+      {{ field(form.communication_key) }}
+      <p class="small text-muted">Use a private LAN IP for hardware. The communication code is encrypted and never shown again after saving.</p>
+    </section>
+    <section class="col-lg-6" aria-labelledby="punch-heading">
+      <h2 id="punch-heading" class="h5">Punch interpretation</h2>
+      {{ field(form.direction_field) }}
+      <div class="row"><div class="col-sm-6">{{ field(form.check_in_codes) }}</div><div class="col-sm-6">{{ field(form.check_out_codes) }}</div></div>
+      <p class="small text-muted">Confirm event field and codes for the exact device firmware. Unrecognized codes are logged but not converted to visits.</p>
+      {{ field(form.is_active) }}
+    </section>
+  </div>
+  {% if device %}<p class="small text-muted">Leave the communication-code field blank to keep the saved code.</p>{% endif %}
+  <div class="mt-3">{{ form_actions(url_for('devices.index'), 'Save device') }}</div>
+</form>
+{% endblock %}

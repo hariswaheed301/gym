@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, form_actions %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ title }}</h1>
+<div class="card"><div class="card-body"><form method="post" novalidate autocomplete="off">{{ form.hidden_tag() }}
+  {% for f in form if f.type not in ('CSRFTokenField',) %}{{ field(f) }}{% endfor %}
+  <p class="small text-muted">Passwords need at least 10 characters with upper and lower case letters and a digit.</p>
+  {{ form_actions(url_for('staff.index'), 'Save') }}</form></div></div>
+{% endblock %}

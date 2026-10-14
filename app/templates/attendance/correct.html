@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, form_actions %}
+{% block title %}Correct attendance{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">{{ 'Record missed check-out' if att.is_open else 'Correct attendance times' }}</h1>
+<p class="text-muted">{{ att.member.full_name }} ({{ att.member.member_number }}) · checked in {{ att.check_in_at|localdt }}{% if att.check_out_at %} · checked out {{ att.check_out_at|localdt }}{% endif %}</p>
+<div class="alert alert-info">Corrections are administrator-only and are marked as such. The original times and your reason are preserved in the audit log. Times are in gym local time ({{ config.GYM_TIMEZONE }}) and cannot be in the future.</div>
+<div class="card"><div class="card-body"><form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row"><div class="col-md-6">{{ field(form.check_in_local) }}</div><div class="col-md-6">{{ field(form.check_out_local) }}</div></div>
+  {{ field(form.reason) }}
+  {{ form_actions(url_for('attendance.history', member_id=att.member_id), 'Save correction') }}
+</form></div></div>
+{% endblock %}

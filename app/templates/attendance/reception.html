@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Check-in / out{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Reception: check-in / check-out</h1>
+<div class="card mb-4"><div class="card-body">
+  <form method="get" action="{{ url_for('attendance.reception') }}" id="member-search" role="search" data-url="{{ url_for('attendance.reception') }}">
+    <label for="member-q" class="form-label">Find member by number, name or phone</label>
+    <div class="input-group input-group-lg"><input id="member-q" name="q" value="{{ q }}" class="form-control" autocomplete="off" autofocus placeholder="e.g. M00012, Ali, 0300…">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Search</button></div>
+  </form>
+  <div id="results" class="mt-3" aria-live="polite">{% include "attendance/_results.html" %}</div>
+</div></div>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+  <h2 class="h4 mb-0">Currently inside <span class="badge text-bg-primary" id="inside-count">{{ inside.sessions|length }}</span></h2>
+  <div class="d-flex align-items-center gap-2"><span id="inside-status" class="small text-muted" role="status"></span>
+    <label class="visually-hidden" for="inside-q">Filter inside list</label><input id="inside-q" class="form-control form-control-sm" placeholder="Filter inside list" autocomplete="off"></div>
+</div>
+<div id="inside-live" data-url="{{ url_for('attendance.inside_partial') }}" data-server-now="{{ now|iso }}">
+  {% with sessions=inside.sessions, now=inside.now, current=inside.current, cutoff=inside.cutoff, action_form=inside.action_form %}{% include "attendance/_inside_table.html" %}{% endwith %}
+</div>
+{% endblock %}

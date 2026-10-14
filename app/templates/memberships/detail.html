@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, post_button %}
+{% block title %}Membership{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+  <div><h1 class="h3 mb-0">{{ m.plan.name }} {{ badge(m.state(today)) }} {{ badge(m.payment_status) }}</h1>
+    <a href="{{ url_for('members.detail', member_id=m.member_id) }}">{{ m.member.full_name }} ({{ m.member.member_number }})</a></div>
+  <div class="d-flex gap-2">{% if m.status != 'cancelled' and m.outstanding > 0 %}<a class="btn btn-primary" href="{{ url_for('payments.create', membership_id=m.id) }}"><i class="bi bi-cash"></i> Record payment</a>{% endif %}
+    {% if m.status != 'cancelled' %}<a class="btn btn-outline-primary" href="{{ url_for('memberships.create', member_id=m.member_id) }}">Renew</a>{% endif %}</div>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-md-6"><div class="card h-100"><div class="card-body"><dl class="row mb-0">
+    <dt class="col-5">Period</dt><dd class="col-7">{{ m.start_date|datefmt }} – {{ m.expiry_date|datefmt }}</dd>
+    <dt class="col-5">Agreed price</dt><dd class="col-7">{{ m.price|money(m.currency) }}</dd>
+    <dt class="col-5">Discount</dt><dd class="col-7">{{ m.discount|money(m.currency) }}</dd>
+    <dt class="col-5">Net price</dt><dd class="col-7">{{ m.net_price|money(m.currency) }}</dd>
+    <dt class="col-5">Paid</dt><dd class="col-7">{{ m.paid_total|money(m.currency) }}</dd>
+    <dt class="col-5">Outstanding</dt><dd class="col-7"><strong>{{ (m.outstanding if m.status != 'cancelled' else 0)|money(m.currency) }}</strong></dd>
+    {% if m.renewed_from_id %}<dt class="col-5">Renewal of</dt><dd class="col-7"><a href="{{ url_for('memberships.detail', membership_id=m.renewed_from_id) }}">Previous membership</a></dd>{% endif %}
+    {% if m.notes %}<dt class="col-5">Notes</dt><dd class="col-7">{{ m.notes }}</dd>{% endif %}</dl></div></div></div>
+  {% if current_user.role == 'admin' and m.status != 'cancelled' %}
+  <div class="col-md-6"><div class="card h-100"><div class="card-header">Administration</div><div class="card-body">
+    {% if m.status == 'suspended' %}
+      {{ post_button(url_for('memberships.status', membership_id=m.id, action='reactivate'), 'Reactivate', None, 'btn-outline-success btn-sm') }}
+    {% else %}
+    <form method="post" action="{{ url_for('memberships.status', membership_id=m.id, action='suspend') }}" class="mb-2" data-confirm="Suspend this membership? Entry will be denied.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label" for="reason">Reason (required)</label><input id="reason" name="reason" class="form-control mb-2" maxlength="500" required>
+      <button class="btn btn-outline-warning btn-sm" type="submit">Suspend</button>
+      <button class="btn btn-outline-danger btn-sm" type="submit" formaction="{{ url_for('memberships.status', membership_id=m.id, action='cancel') }}" data-confirm-button="Cancel this membership? This cannot be undone.">Cancel membership</button>
+    </form>{% endif %}
+  </div></div></div>{% endif %}
+</div>
+<div class="card"><div class="card-header">Payments</div>
+{% if m.payments %}<div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Receipt</th><th>Date</th><th>Method</th><th>Reference</th><th>By</th><th class="text-end">Amount</th><th>Status</th></tr></thead><tbody>
+{% for p in m.payments %}<tr><td><a href="{{ url_for('payments.receipt', payment_id=p.id) }}">{{ p.receipt_number }}</a></td><td>{{ p.paid_at|localdt }}</td><td>{{ p.method|replace('_',' ')|title }}</td><td>{{ p.reference_number or '—' }}</td><td>{{ p.recorded_by.full_name }}</td><td class="text-end">{{ p.amount|money(m.currency) }}</td><td>{{ badge(p.status) }}</td></tr>{% endfor %}</tbody></table></div>
+{% else %}<div class="card-body text-muted">No payments recorded.</div>{% endif %}</div>
+{% endblock %}

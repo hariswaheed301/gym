@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, form_actions %}
+{% block title %}{{ 'Edit member' if member else 'Register member' }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ 'Edit ' ~ member.full_name if member else 'Register member' }}</h1>
+<div class="card"><div class="card-body"><form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row"><div class="col-md-6">{{ field(form.full_name) }}</div><div class="col-md-6">{{ field(form.phone) }}</div>
+    <div class="col-md-6">{{ field(form.email) }}</div><div class="col-md-3">{{ field(form.date_of_birth) }}</div><div class="col-md-3">{{ field(form.gender) }}</div>
+    <div class="col-12">{{ field(form.address) }}</div>
+    <div class="col-md-6">{{ field(form.emergency_contact_name) }}</div><div class="col-md-6">{{ field(form.emergency_contact_phone) }}</div>
+    {% if form.notes %}<div class="col-12">{{ field(form.notes) }}</div>{% endif %}</div>
+  {{ form_actions(url_for('members.detail', member_id=member.id) if member else url_for('members.index'), 'Save member') }}
+</form></div></div>
+{% endblock %}

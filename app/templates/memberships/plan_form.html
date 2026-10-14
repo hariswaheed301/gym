@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, form_actions %}
+{% block title %}{{ 'Edit plan' if plan else 'New plan' }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ 'Edit plan' if plan else 'New plan' }}</h1>
+<div class="card"><div class="card-body"><form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row"><div class="col-md-8">{{ field(form.name) }}</div><div class="col-md-4">{{ field(form.currency) }}</div>
+    <div class="col-12">{{ field(form.description) }}</div>
+    <div class="col-md-6">{{ field(form.duration_days) }}</div><div class="col-md-6">{{ field(form.price) }}</div>
+    <div class="col-md-6">{{ field(form.access_start_time) }}</div><div class="col-md-6">{{ field(form.access_end_time) }}</div>
+    {% if form.equipment_ids.choices %}<div class="col-12">{{ field(form.equipment_ids) }}<div class="form-text mb-3">Hold Ctrl/Cmd to select several. A member-specific restriction always overrides this.</div></div>{% endif %}
+    <div class="col-12">{{ field(form.is_active) }}</div></div>
+  {{ form_actions(url_for('memberships.plans'), 'Save plan') }}
+</form></div></div>
+{% endblock %}

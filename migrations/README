@@ -1,0 +1,1 @@
+Single-database Alembic configuration (Flask-Migrate). Run `flask db upgrade` to build a clean database.

@@ -1,0 +1,53 @@
+{% macro field(f) %}
+  {% if f.type == 'HiddenField' or f.type == 'CSRFTokenField' %}{{ f() }}
+  {% elif f.type == 'BooleanField' %}
+    <div class="form-check mb-3">{{ f(class_='form-check-input') }}{{ f.label(class_='form-check-label') }}
+      {% for e in f.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</div>
+  {% else %}
+    <div class="mb-3">
+      {{ f.label(class_='form-label') }}{% if f.flags.required %}<span class="text-danger" aria-hidden="true"> *</span>{% endif %}
+      {% set base = 'form-select' if f.type in ('SelectField', 'SelectMultipleField') else 'form-control' %}
+      {{ f(class_=base ~ (' is-invalid' if f.errors else ''), **{'aria-describedby': f.id ~ '-err'}) }}
+      <div id="{{ f.id }}-err" class="invalid-feedback">{% for e in f.errors %}{{ e }} {% endfor %}</div>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro badge(kind) %}
+  {% set colors = {
+    'current': 'success', 'active': 'success', 'paid': 'success', 'valid': 'success', 'operational': 'success', 'ok': 'success', 'online': 'success', 'demo': 'info', 'imported': 'success',
+    'partial': 'warning', 'upcoming': 'info', 'maintenance': 'warning', 'suspended': 'warning',
+    'expired': 'danger', 'unpaid': 'danger', 'voided': 'secondary', 'cancelled': 'secondary',
+    'unavailable': 'danger', 'inactive': 'secondary', 'open': 'primary', 'completed': 'secondary', 'offline': 'danger', 'rejected': 'danger', 'ignored': 'warning', 'unknown': 'secondary'} %}
+  <span class="badge text-bg-{{ colors.get(kind, 'secondary') }}">{{ kind|replace('_', ' ')|title }}</span>
+{% endmacro %}
+
+{% macro post_button(url, label, confirm=None, cls='btn-outline-primary btn-sm', extra=None) %}
+  <form method="post" action="{{ url }}" class="d-inline"{% if confirm %} data-confirm="{{ confirm }}"{% endif %}>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if extra %}{% for k, v in extra.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}{% endif %}
+    <button type="submit" class="btn {{ cls }}">{{ label }}</button>
+  </form>
+{% endmacro %}
+
+{% macro pagination(page) %}
+  {% if page.pages > 1 %}
+  <nav aria-label="Pagination"><ul class="pagination pagination-sm justify-content-center mb-0">
+    <li class="page-item {{ '' if page.has_prev else 'disabled' }}"><a class="page-link" href="{{ page_url(page.page - 1) if page.has_prev else '#' }}">Previous</a></li>
+    {% for n in page.iter_pages() %}
+      <li class="page-item {{ 'active' if n == page.page else '' }}"><a class="page-link" href="{{ page_url(n) }}">{{ n }}</a></li>
+    {% endfor %}
+    <li class="page-item {{ '' if page.has_next else 'disabled' }}"><a class="page-link" href="{{ page_url(page.page + 1) if page.has_next else '#' }}">Next</a></li>
+  </ul></nav>
+  {% endif %}
+  <p class="text-center text-muted small mt-2 mb-0">{{ page.total }} record{{ '' if page.total == 1 else 's' }}</p>
+{% endmacro %}
+
+{% macro empty(message, icon='bi-inbox') %}
+  <div class="text-center text-muted py-5"><i class="bi {{ icon }} fs-1" aria-hidden="true"></i><p class="mt-2 mb-0">{{ message }}</p></div>
+{% endmacro %}
+
+{% macro form_actions(cancel_url, label='Save') %}
+  <button type="submit" class="btn btn-primary">{{ label }}</button>
+  <a href="{{ cancel_url }}" class="btn btn-link">Cancel</a>
+{% endmacro %}

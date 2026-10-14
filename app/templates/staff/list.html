@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, post_button %}
+{% block title %}Staff{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0">Staff accounts</h1><a class="btn btn-primary" href="{{ url_for('staff.create') }}"><i class="bi bi-person-plus"></i> New account</a></div>
+<div class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th>Last sign-in</th><th></th></tr></thead><tbody>
+{% for u in users %}<tr><td>{{ u.username }}</td><td>{{ u.full_name }}</td><td>{{ u.role|title }}</td><td>{{ badge('active' if u.active else 'inactive') }}</td><td>{{ u.last_login_at|localdt }}</td>
+  <td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('staff.reset_password', user_id=u.id) }}">Reset password</a>
+  {% if u.id != current_user.id %}{{ post_button(url_for('staff.toggle', user_id=u.id), 'Deactivate' if u.active else 'Activate', ('Deactivate ' ~ u.username ~ '? They will be signed out.') if u.active else None, 'btn-outline-danger btn-sm' if u.active else 'btn-outline-success btn-sm') }}{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

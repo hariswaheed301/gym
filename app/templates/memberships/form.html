@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, form_actions %}
+{% block title %}New membership{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">{{ 'Renew membership' if latest else 'New membership' }}</h1>
+<p class="text-muted">{{ member.full_name }} ({{ member.member_number }})</p>
+{% if latest %}<div class="alert alert-info">Latest membership: {{ latest.plan.name }}, {{ latest.start_date|datefmt }} – {{ latest.expiry_date|datefmt }}. A renewal starts the day after it expires, so periods never overlap.</div>{% endif %}
+{% if not form.plan_id.choices %}<div class="alert alert-warning">No active plans exist. {% if current_user.role == 'admin' %}<a href="{{ url_for('memberships.plan_create') }}">Create a plan</a>.{% else %}Ask an administrator to create one.{% endif %}</div>{% endif %}
+<div class="card"><div class="card-body"><form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  {{ field(form.plan_id) }}{{ field(form.start_date) }}
+  {% if form.discount %}{{ field(form.discount) }}{% endif %}
+  {{ field(form.notes) }}
+  {{ form_actions(url_for('members.detail', member_id=member.id), 'Create membership') }}
+</form></div></div>
+{% endblock %}

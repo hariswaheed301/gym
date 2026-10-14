@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% macro stat(label, value, icon, href=None, tone='primary') %}
+  <div class="col-6 col-md-4 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
+    <div class="d-flex justify-content-between"><span class="text-muted small">{{ label }}</span><i class="bi {{ icon }} text-{{ tone }}" aria-hidden="true"></i></div>
+    <div class="fs-3 fw-semibold">{% if href %}<a class="stretched-link text-decoration-none text-reset" href="{{ href }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</div>
+  </div></div></div>
+{% endmacro %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h3 mb-0">Dashboard</h1>
+  <form method="get" class="d-flex gap-2 align-items-center">
+    <label for="date" class="small text-muted mb-0">Day metrics for</label>
+    <input type="date" id="date" name="date" class="form-control form-control-sm" value="{{ m.day.isoformat() }}">
+    <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+  </form>
+</div>
+{% if m.long_open %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> {{ m.long_open }} session(s) have been open for a very long time — possible missed check-outs. <a href="{{ url_for('attendance.history', state='open') }}">Review</a></div>{% endif %}
+<div class="row g-3 mb-4">
+  {{ stat('Registered members', m.total_members, 'bi-people', url_for('members.index', status='all')) }}
+  {{ stat('Active members', m.active_members, 'bi-person-check', url_for('members.index')) }}
+  {{ stat('Inside now', m.inside_now, 'bi-door-open', url_for('attendance.reception')) }}
+  {{ stat('Check-ins (' ~ m.day.strftime('%d %b') ~ ')', m.checkins_day, 'bi-box-arrow-in-right', url_for('reports.daily', date=m.day.isoformat())) }}
+  {{ stat('Completed visits (' ~ m.day.strftime('%d %b') ~ ')', m.completed_day, 'bi-check2-circle') }}
+  {{ stat('Expiring in ' ~ config.EXPIRY_WARNING_DAYS ~ ' days', m.expiring_soon, 'bi-hourglass-split', url_for('members.index', membership='current'), 'warning') }}
+  {{ stat('Expired (not renewed)', m.expired, 'bi-x-circle', url_for('members.index', membership='expired'), 'danger') }}
+  {{ stat('Members with dues', m.dues_members, 'bi-cash-coin', url_for('payments.dues'), 'danger') }}
+  {{ stat('Total outstanding', m.dues_total|money, 'bi-wallet2', url_for('payments.dues'), 'danger') }}
+</div>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header">Recent payments</div>
+    {% if m.recent_payments %}<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Receipt</th><th>Member</th><th class="text-end">Amount</th><th>Status</th></tr></thead><tbody>
+    {% for p in m.recent_payments %}<tr><td><a href="{{ url_for('payments.receipt', payment_id=p.id) }}">{{ p.receipt_number }}</a><div class="small text-muted">{{ p.paid_at|localdt }}</div></td>
+      <td><a href="{{ url_for('members.detail', member_id=p.membership.member_id) }}">{{ p.membership.member.full_name }}</a></td>
+      <td class="text-end">{{ p.amount|money(p.membership.currency) }}</td><td>{{ badge(p.status) }}</td></tr>{% endfor %}
+    </tbody></table></div>{% else %}{{ empty('No payments yet.') }}{% endif %}</div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header">Recent attendance</div>
+    {% if m.recent_attendance %}<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Member</th><th>In</th><th>Out</th></tr></thead><tbody>
+    {% for a in m.recent_attendance %}<tr><td><a href="{{ url_for('members.detail', member_id=a.member_id) }}">{{ a.member.full_name }}</a></td>
+      <td>{{ a.check_in_at|localdt }}</td><td>{% if a.check_out_at %}{{ a.check_out_at|localdt }}{% else %}{{ badge('open') }}{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>{% else %}{{ empty('No attendance yet.') }}{% endif %}</div></div>
+  <div class="col-12"><div class="card"><div class="card-header d-flex justify-content-between">Equipment status <a href="{{ url_for('equipment.index') }}" class="small">Manage</a></div>
+    <div class="card-body d-flex gap-4 flex-wrap">
+      {% for s in ['operational', 'maintenance', 'unavailable'] %}<div>{{ badge(s) }} <span class="fs-5 ms-1">{{ m.equipment.get(s, 0) }}</span></div>{% endfor %}
+    </div></div></div>
+</div>
+{% endblock %}

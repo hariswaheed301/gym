@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, pagination, empty %}
+{% block title %}Attendance history{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Attendance history{% if member %}: {{ member.full_name }}{% endif %}</h1>
+<form method="get" class="row g-2 mb-3">
+  {% if member_id %}<input type="hidden" name="member_id" value="{{ member_id }}">{% endif %}
+  <div class="col-md-3"><label class="form-label small" for="q">Member</label><input id="q" name="q" value="{{ q }}" class="form-control" placeholder="No., name or phone"></div>
+  <div class="col-6 col-md-2"><label class="form-label small" for="from">From</label><input type="date" id="from" name="from" value="{{ date_from }}" class="form-control"></div>
+  <div class="col-6 col-md-2"><label class="form-label small" for="to">To</label><input type="date" id="to" name="to" value="{{ date_to }}" class="form-control"></div>
+  <div class="col-md-2"><label class="form-label small" for="state">Sessions</label><select id="state" name="state" class="form-select">{% for v,l in [('','All'),('open','Open'),('completed','Completed')] %}<option value="{{ v }}" {{ 'selected' if state == v }}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="col-md-3 d-flex align-items-end gap-2"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-link" href="{{ url_for('attendance.history') }}">Reset</a></div>
+</form>
+<p class="small text-muted">Visits are filtered by the date they <em>started</em> (gym local time); a visit that crosses midnight stays on its check-in day.</p>
+<div class="card">{% if page.items %}<div class="table-responsive"><table class="table table-sm align-middle mb-0">
+<thead><tr><th>Member</th><th>Check-in</th><th>Check-out</th><th>Duration</th><th>In by</th><th>Out by</th><th></th></tr></thead><tbody>
+{% for a in page.items %}<tr>
+  <td><a href="{{ url_for('members.detail', member_id=a.member_id) }}">{{ a.member.full_name }}</a><div class="small text-muted">{{ a.member.member_number }}</div></td>
+  <td>{{ a.check_in_at|localdt }}</td>
+  <td>{% if a.check_out_at %}{{ a.check_out_at|localdt }}{% else %}{{ badge('open') }}{% if a.check_in_at < cutoff %} <span class="badge text-bg-warning">Long-running</span>{% endif %}{% endif %}
+    {% if a.is_correction %}<div><span class="badge text-bg-warning" title="{{ a.correction_reason }}">Corrected</span> <span class="small text-muted">{{ a.corrected_by.full_name }}</span></div>{% endif %}</td>
+  <td>{{ a.duration|duration if a.check_out_at else (a.elapsed(now)|duration ~ ' so far') }}</td>
+  <td>{{ a.check_in_by.full_name if a.check_in_by else '—' }}</td><td>{{ a.check_out_by.full_name if a.check_out_by else '—' }}</td>
+  <td class="text-end">{% if current_user.role == 'admin' %}<a href="{{ url_for('attendance.correct', attendance_id=a.id) }}">Correct</a>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}{{ empty('No attendance records match.', 'bi-clock-history') }}{% endif %}</div>
+<div class="mt-3">{{ pagination(page) }}</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty %}
+{% block title %}Membership plans{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0">Membership plans</h1>
+  {% if current_user.role == 'admin' %}<a class="btn btn-primary" href="{{ url_for('memberships.plan_create') }}"><i class="bi bi-plus-lg"></i> New plan</a>{% endif %}</div>
+<div class="card">{% if plans %}<div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Plan</th><th>Duration</th><th class="text-end">Price</th><th>Access hours</th><th>Status</th><th></th></tr></thead><tbody>
+{% for p in plans %}<tr><td><strong>{{ p.name }}</strong><div class="small text-muted">{{ p.description or '' }}</div></td><td>{{ p.duration_days }} days</td>
+  <td class="text-end">{{ p.price|money(p.currency) }}</td><td>{% if p.access_start_time %}{{ p.access_start_time.strftime('%H:%M') }}–{{ p.access_end_time.strftime('%H:%M') }}{% else %}24 hours{% endif %}</td>
+  <td>{{ badge('active' if p.is_active else 'inactive') }}</td>
+  <td class="text-end">{% if current_user.role == 'admin' %}<a href="{{ url_for('memberships.plan_edit', plan_id=p.id) }}">Edit</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% else %}{{ empty('No plans yet. Create one before registering memberships.', 'bi-card-checklist') }}{% endif %}</div>
+{% endblock %}

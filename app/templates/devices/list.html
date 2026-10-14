@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty %}
+{% block title %}Attendance devices{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Attendance devices</h1>
+  <a class="btn btn-primary" href="{{ url_for('devices.create') }}"><i class="bi bi-plus-lg"></i> Add device</a>
+</div>
+<div class="table-responsive"><table class="table table-hover align-middle">
+  <thead><tr><th>Name</th><th>Mode</th><th>Address</th><th>State</th><th>Last sync</th><th>Active</th><th></th></tr></thead>
+  <tbody>
+  {% for d in devices %}<tr>
+    <td><a href="{{ url_for('devices.detail', device_id=d.id) }}">{{ d.name }}</a></td>
+    <td>{{ 'Simulator' if d.adapter == 'simulator' else 'ZKTeco ' ~ d.transport|upper }}</td>
+    <td>{{ (d.host ~ ':' ~ d.port) if d.host else '—' }}</td>
+    <td>{{ badge(d.connection_state) }}{% if d.last_error %}<div class="small text-danger">{{ d.last_error }}</div>{% endif %}</td>
+    <td>{{ d.last_sync_at|localdt }}</td><td>{{ badge('active' if d.is_active else 'inactive') }}</td>
+    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('devices.edit', device_id=d.id) }}">Configure</a></td>
+  </tr>{% else %}<tr><td colspan="7">{{ empty('No attendance devices configured.', 'bi-fingerprint') }}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

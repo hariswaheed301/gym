@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, post_button, empty, badge %}
+{% block title %}{{ device.name }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div><h1 class="h3 mb-1">{{ device.name }}</h1><div class="text-muted small">{{ device.adapter|title }}{% if device.host %} · {{ device.host }}:{{ device.port }} · {{ device.transport|upper }}{% endif %} · {{ badge(device.connection_state) }}</div></div>
+  <div class="d-flex gap-2"><a class="btn btn-outline-primary" href="{{ url_for('devices.edit', device_id=device.id) }}">Configure</a>
+    {{ post_button(url_for('devices.test', device_id=device.id), 'Test connection') }}
+    {{ post_button(url_for('devices.sync', device_id=device.id), 'Sync now', 'Read attendance logs from this device?') }}</div>
+</div>
+{% if device.last_error %}<div class="alert alert-warning">{{ device.last_error }}</div>{% endif %}
+<div class="row g-3 mb-4"><div class="col-md-4"><div class="border rounded p-3"><div class="small text-muted">Last seen</div><strong>{{ device.last_seen_at|localdt }}</strong></div></div>
+  <div class="col-md-4"><div class="border rounded p-3"><div class="small text-muted">Last sync</div><strong>{{ device.last_sync_at|localdt }}</strong></div></div>
+  <div class="col-md-4"><div class="border rounded p-3"><div class="small text-muted">Direction codes</div><strong>In {{ device.check_in_codes }} · Out {{ device.check_out_codes }}</strong></div></div></div>
+
+<section class="mb-4" aria-labelledby="mapping-heading">
+  <h2 id="mapping-heading" class="h5">Device user mapping</h2>
+  <p class="small text-muted">Map the terminal's user ID to an existing gym member. IDs are specific to this device.</p>
+  <form method="post" action="{{ url_for('devices.add_mapping', device_id=device.id) }}" class="row g-2 align-items-end mb-3">
+    {{ mapping_form.hidden_tag() }}
+    <div class="col-md-4">{{ field(mapping_form.device_user_id) }}</div><div class="col-md-6">{{ field(mapping_form.member_id) }}</div>
+    <div class="col-md-2 d-grid mb-3"><button class="btn btn-primary" type="submit">Add mapping</button></div>
+  </form>
+  <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Device user ID</th><th>Gym member</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for mapping in mappings %}<tr><td>{{ mapping.device_user_id }}</td><td><a href="{{ url_for('members.detail', member_id=mapping.member_id) }}">{{ mapping.member.member_number }} · {{ mapping.member.full_name }}</a></td><td>{{ badge('active' if mapping.is_active else 'inactive') }}</td>
+      <td class="text-end">{% if mapping.is_active %}{{ post_button(url_for('devices.deactivate_mapping', device_id=device.id, mapping_id=mapping.id), 'Deactivate', 'Keep the mapping history and stop importing this user?', 'btn-outline-danger btn-sm') }}{% endif %}</td></tr>
+    {% else %}<tr><td colspan="4">{{ empty('No user IDs mapped yet.') }}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+{% if device.adapter == 'simulator' %}<section class="border-top pt-4 mb-4" aria-labelledby="sim-heading">
+  <h2 id="sim-heading" class="h5">Simulate a punch</h2>
+  <form method="post" action="{{ url_for('devices.simulate', device_id=device.id) }}" class="row g-2 align-items-end">
+    {{ sim_form.hidden_tag() }}<div class="col-md-5">{{ field(sim_form.mapping_id) }}</div><div class="col-md-4">{{ field(sim_form.direction) }}</div>
+    <div class="col-md-3 d-grid mb-3"><button class="btn btn-outline-primary" type="submit">Record demo punch</button></div>
+  </form>
+</section>{% endif %}
+
+<section class="border-top pt-4" aria-labelledby="events-heading">
+  <h2 id="events-heading" class="h5">Recent punch events</h2>
+  <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Received</th><th>Device user ID</th><th>Punch time</th><th>Direction</th><th>Result</th><th>Details</th></tr></thead><tbody>
+    {% for punch in punches %}<tr><td>{{ punch.received_at|localdt }}</td><td>{{ punch.device_user_id }}</td><td>{{ punch.punched_at|localdt }}</td><td>{{ punch.direction|title }} ({{ punch.event_code }})</td><td>{{ badge(punch.outcome) }}</td><td>{{ punch.message or '—' }}</td></tr>
+    {% else %}<tr><td colspan="6">{{ empty('No punch events received.') }}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}
